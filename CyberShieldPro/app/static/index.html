@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
@@ -638,7 +638,7 @@ input,select,textarea{font-family:var(--font);color:var(--text)}
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <div class="card-title" style="margin:0">XODIMLAR RO'YXATI</div>
-        <button onclick="loadEmployees()" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--cyan);padding:6px 14px;border-radius:6px;font-size:11px">↻ Yangilash</button>
+        <button onclick="loadEmployees()" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--cyan);padding:6px 14px;border-radius:6px;font-size:11px">↻ Yangilash</button><button onclick="showAddEmployee()" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:var(--purple);padding:6px 14px;border-radius:6px;font-size:11px;margin-left:8px">+ Xodim qoshish</button>
       </div>
       <div style="overflow-x:auto">
         <table class="emp-table">
@@ -750,7 +750,7 @@ let scanHistory = [];
 let simulations = [];
 let employees = [];
 
-const API = 'http://localhost:8000/api';
+const API = '/api/admin';
 
 // ===== TEMPLATES =====
 const emailTemplates = {
@@ -1032,8 +1032,8 @@ async function doAdminLogin() {
   if (!user || !pass) { err.textContent = '⚠ Login va parolni kiriting'; err.classList.add('show'); return; }
 
   try {
-    const res = await fetch(API + '/auth/login', {
-      method:'POST', headers:{'Content-Type':'application/json'},
+    const res = await fetch(API + '/login', {
+      method:'POST', headers:{'Content-Type':'application/json','token':adminToken},
       body: JSON.stringify({username:user, password:pass})
     });
     const data = await res.json();
@@ -1076,7 +1076,7 @@ function logoutAdmin() {
 // ===== EMPLOYEES =====
 async function loadEmployees() {
   try {
-    const res = await fetch(API + '/employees');
+    const res = await fetch(API + '/employees', {headers: {'token': adminToken}});
     employees = await res.json();
   } catch {
     employees = [
@@ -1207,7 +1207,7 @@ async function sendSimulation() {
 
   try {
     await fetch(API + '/simulation/send', {
-      method:'POST', headers:{'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json','token':adminToken},
       body: JSON.stringify({employee_ids: checked, template: selectedTemplate})
     });
   } catch {}
@@ -1376,6 +1376,20 @@ window.addEventListener('load', () => {
   document.getElementById('certDate').textContent = new Date().toLocaleDateString('uz-UZ');
   loadEmployees();
 });
+function showAddEmployee() {
+  const name = prompt("Xodim ismi:");
+  if (!name) return;
+  const email = prompt("Email:");
+  const department = prompt("Bo'lim:");
+  const emp = {name, email, department, risk: 50, phishing_sent: 0, phishing_clicked: 0, trained: false};
+  fetch(API + '/employees', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'token': adminToken},
+    body: JSON.stringify(emp)
+  }).then(() => loadEmployees());
+}
 </script>
 </body>
 </html>
+
+

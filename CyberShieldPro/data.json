@@ -1,0 +1,153 @@
+{
+  "employees": [
+    {
+      "id": "emp1",
+      "name": "Alisher Karimov",
+      "email": "alisher@company.uz",
+      "department": "Buxgalteriya",
+      "risk": 87,
+      "phishing_sent": 0,
+      "phishing_clicked": 0,
+      "trained": false
+    },
+    {
+      "id": "emp2",
+      "name": "Dilnoza Yusupova",
+      "email": "dilnoza@company.uz",
+      "department": "IT",
+      "risk": 54,
+      "phishing_sent": 0,
+      "phishing_clicked": 0,
+      "trained": true
+    },
+    {
+      "id": "emp3",
+      "name": "Bobur Rahimov",
+      "email": "bobur@company.uz",
+      "department": "HR",
+      "risk": 23,
+      "phishing_sent": 0,
+      "phishing_clicked": 0,
+      "trained": true
+    },
+    {
+      "id": "emp4",
+      "name": "Malika Toshmatova",
+      "email": "malika@company.uz",
+      "department": "Sotish",
+      "risk": 76,
+      "phishing_sent": 0,
+      "phishing_clicked": 0,
+      "trained": false
+    },
+    {
+      "id": "emp5",
+      "name": "Sardor Umarov",
+      "email": "sardor@company.uz",
+      "department": "Marketing",
+      "risk": 45,
+      "phishing_sent": 0,
+      "phishing_clicked": 0,
+      "trained": false
+    },
+    {
+      "id": "emp6",
+      "name": "Nilufar Hasanova",
+      "email": "nilufar@company.uz",
+      "department": "Yuridik",
+      "risk": 52,
+      "phishing_sent": 0,
+      "phishing_clicked": 0,
+      "trained": false
+    },
+    {
+      "id": "emp7",
+      "name": "Jasur Mirzayev",
+      "email": "jasur@company.uz",
+      "department": "Logistika",
+      "risk": 19,
+      "phishing_sent": 0,
+      "phishing_clicked": 0,
+      "trained": true
+    },
+    {
+      "id": "emp8",
+      "name": "Feruza Qodirova",
+      "email": "feruza@company.uz",
+      "department": "Ombor",
+      "risk": 71,
+      "phishing_sent": 0,
+      "phishing_clicked": 0,
+      "trained": false
+    },
+    {
+      "id": "emp9",
+      "name": "Ibrohim Nazarov",
+      "email": "ibrohim@company.uz",
+      "department": "Xavfsizlik",
+      "risk": 12,
+      "phishing_sent": 0,
+      "phishing_clicked": 0,
+      "trained": true
+    },
+    {
+      "id": "emp10",
+      "name": "Zulfiya Ergasheva",
+      "email": "zulfiya@company.uz",
+      "department": "Qo'llab-quvvatlash",
+      "risk": 48,
+      "phishing_sent": 0,
+      "phishing_clicked": 0,
+      "trained": false
+    }
+  ],
+  "simulations": [
+    {
+      "employee_ids": [
+        "emp1",
+        "emp2",
+        "emp3",
+        "emp4",
+        "emp5",
+        "emp6",
+        "emp7",
+        "emp8",
+        "emp9",
+        "emp10"
+      ],
+      "template": "bank"
+    },
+    {
+      "employee_ids": [
+        "emp1",
+        "emp2",
+        "emp3",
+        "emp4",
+        "emp5",
+        "emp6",
+        "emp7",
+        "emp8",
+        "emp9",
+        "emp10"
+      ],
+      "template": "bank"
+    },
+    {
+      "employee_ids": [
+        "emp1",
+        "emp2",
+        "emp3",
+        "emp4",
+        "emp5",
+        "emp6",
+        "emp7",
+        "emp8",
+        "emp9",
+        "emp10"
+      ],
+      "template": "it"
+    }
+  ],
+  "scan_results": [],
+  "training_scores": []
+}

@@ -359,7 +359,7 @@ def complete_training():
 # Main HTML page
 @app.route('/')
 def index():
-    return open('index.html', encoding='utf-8').read()
+    base_dir = os.path.dirname(os.path.abspath(__file__))
 
 if __name__ == '__main__':
     print("🛡️  CyberShieldPro serveri ishga tushmoqda...")

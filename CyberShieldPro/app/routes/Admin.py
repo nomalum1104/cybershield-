@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional
 from app.Security import (
@@ -9,6 +9,8 @@ from app.Security import (
 from app.services.risk_model import analyze_url, analyze_email
 import random
 from datetime import datetime
+from app.static.server import load_data, save_data
+from app.static.server import load_data, save_data
 
 router = APIRouter(prefix="/api/admin")
 
@@ -128,3 +130,41 @@ async def batch_scan(data: ScanBatchRequest, request: Request):
             r = analyze_email(item)
         results.append({"item": item[:60], "score": r["score"], "risk": r["risk_level"]})
     return {"results": results, "total": len(results)}
+
+@router.get("/employees")
+async def get_employees(token: str = Header(None), request: Request = None):
+    ip = get_client_ip(request)
+    user = validate_token(token, ip)
+    if not user:
+        raise HTTPException(status_code=401, detail="Token noto'g'ri")
+    data = load_data()
+    return data.get("employees", [])
+
+@router.post("/employees")
+async def add_employee(emp: dict, token: str = Header(None), request: Request = None):
+    ip = get_client_ip(request)
+    user = validate_token(token, ip)
+    if not user:
+        raise HTTPException(status_code=401, detail="Token noto'g'ri")
+    data = load_data()
+    if "employees" not in data:
+        data["employees"] = []
+    emp["id"] = str(len(data["employees"]) + 1)
+    data["employees"].append(emp)
+    save_data(data)
+    return {"success": True, "employee": emp}
+
+
+@router.post("/simulation/send")
+async def send_simulation(body: dict, token: str = Header(None), request: Request = None):
+    ip = get_client_ip(request)
+    user = validate_token(token, ip)
+    if not user:
+        raise HTTPException(status_code=401, detail="Token noto'g'ri")
+    data = load_data()
+    if "simulations" not in data:
+        data["simulations"] = []
+    data["simulations"].append(body)
+    save_data(data)
+    return {"success": True}
+
