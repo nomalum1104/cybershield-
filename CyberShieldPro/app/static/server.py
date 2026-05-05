@@ -5,6 +5,7 @@ Python Flask backend
 """
 
 from flask import Flask, request, jsonify, render_template_string, redirect, url_for
+from flask_cors import CORS
 import json, os, datetime, uuid, hashlib, secrets
 from pathlib import Path
 
@@ -364,4 +365,4 @@ if __name__ == '__main__':
     print("🛡️  CyberShieldPro serveri ishga tushmoqda...")
     print("📡  http://localhost:8000")
     print("🔑  Admin: admin / admin123")
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='localhost', port=8000, debug=True)

@@ -14,7 +14,6 @@ async def websocket_threats(websocket: WebSocket):
     connected_clients.append(websocket)
     try:
         while True:
-            # Send live threat simulation every 5 seconds
             await asyncio.sleep(5)
             threat = {
                 "type": "live_threat",
@@ -28,10 +27,8 @@ async def websocket_threats(websocket: WebSocket):
             }
             try:
                 await websocket.send_text(json.dumps(threat))
-            except:
+            except Exception:
                 break
     except WebSocketDisconnect:
-        pass
-    finally:
         if websocket in connected_clients:
             connected_clients.remove(websocket)

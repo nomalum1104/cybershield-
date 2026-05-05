@@ -1,8 +1,7 @@
 import re
-import math
 from urllib.parse import urlparse
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 PHISHING_KEYWORDS = [
     "zudlik bilan", "darhol", "urgent", "immediate", "verify now",
@@ -42,7 +41,6 @@ def analyze_url(url: str) -> Dict:
         path = parsed.path.lower()
         scheme = parsed.scheme
 
-        # HTTP vs HTTPS
         if scheme == 'http':
             score += 20
             indicators.append({
@@ -59,7 +57,6 @@ def analyze_url(url: str) -> Dict:
                 "detail": "SSL sertifikat bor"
             })
 
-        # Suspicious TLD
         for tld in SUSPICIOUS_TLDS:
             if domain.endswith(tld):
                 score += 30
@@ -70,7 +67,6 @@ def analyze_url(url: str) -> Dict:
                     "detail": "Bu TLD ko'pincha fishing saytlar tomonidan ishlatiladi"
                 })
 
-        # IP address instead of domain
         ip_pattern = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
         if ip_pattern.match(domain):
             score += 35
@@ -81,7 +77,6 @@ def analyze_url(url: str) -> Dict:
                 "detail": "Haqiqiy saytlar odatda IP manzil ishlatmaydi"
             })
 
-        # Homograph attacks
         for fake, real in HOMOGRAPH_PAIRS:
             if fake in domain and real not in domain:
                 score += 40
@@ -92,7 +87,6 @@ def analyze_url(url: str) -> Dict:
                     "detail": "Asl sayt nomiga o'xshash soxta domen"
                 })
 
-        # Subdomain abuse
         subdomains = domain.split('.')
         if len(subdomains) > 3:
             score += 15
@@ -103,7 +97,6 @@ def analyze_url(url: str) -> Dict:
                 "detail": "Ko'p subdomen qo'shish orqali asl domenni yashirish urinishi"
             })
 
-        # Legitimate domain in path/subdomain (not actual domain)
         for legit in LEGITIMATE_DOMAINS:
             legit_base = legit.split('.')[0]
             if legit_base in domain and not domain.endswith(legit):
@@ -116,7 +109,6 @@ def analyze_url(url: str) -> Dict:
                 })
                 break
 
-        # Long URL
         if len(url) > 100:
             score += 10
             indicators.append({
@@ -126,7 +118,6 @@ def analyze_url(url: str) -> Dict:
                 "detail": "Fishing saytlar ko'pincha murakkab, uzun URLlar ishlatadi"
             })
 
-        # URL shorteners
         shorteners = ['bit.ly', 'tinyurl', 't.co', 'goo.gl', 'ow.ly', 'short.link']
         for shortener in shorteners:
             if shortener in domain:
@@ -138,7 +129,6 @@ def analyze_url(url: str) -> Dict:
                     "detail": "Haqiqiy manzilni yashirish uchun ishlatilishi mumkin"
                 })
 
-        # Suspicious path keywords
         suspicious_paths = ['login', 'signin', 'verify', 'secure', 'account', 'update', 'banking']
         for sp in suspicious_paths:
             if sp in path:
@@ -151,7 +141,6 @@ def analyze_url(url: str) -> Dict:
                 })
                 break
 
-        # Recommendations
         if score < 20:
             recommendations = [
                 "URL xavfsiz ko'rinadi",
@@ -201,8 +190,8 @@ def analyze_email(text: str) -> Dict:
     indicators = []
     recommendations = []
     text_lower = text.lower()
+    urls = []
 
-    # Phishing keywords
     found_keywords = []
     for keyword in PHISHING_KEYWORDS:
         if keyword.lower() in text_lower:
@@ -217,7 +206,6 @@ def analyze_email(text: str) -> Dict:
             "detail": f"Topilgan so'zlar: {', '.join(found_keywords[:5])}"
         })
 
-    # Urgency patterns
     urgency_patterns = [
         r'\b24\s*soat\b', r'\b48\s*hour', r'asap', r'immediately',
         r'expires?\s+in', r'limited\s+time', r'act\s+now'
@@ -232,7 +220,6 @@ def analyze_email(text: str) -> Dict:
             "detail": "Fishing xabarlar odatda vaqt bosimi yaratib aldaydi"
         })
 
-    # URLs in email
     urls = re.findall(r'https?://[^\s<>"]+', text)
     if urls:
         indicators.append({
@@ -252,7 +239,6 @@ def analyze_email(text: str) -> Dict:
                     "detail": f"Risk score: {url_result['score']}%"
                 })
 
-    # Suspicious attachments mention
     attachment_keywords = ['.exe', '.zip', '.rar', 'fayl yuklang', 'attachment', 'download']
     for kw in attachment_keywords:
         if kw in text_lower:
@@ -265,7 +251,6 @@ def analyze_email(text: str) -> Dict:
             })
             break
 
-    # Personal info requests
     info_patterns = ['kredit karta', 'credit card', 'parol', 'password', 'pin kod', 'ssn', 'passport']
     for pattern in info_patterns:
         if pattern in text_lower:
@@ -278,7 +263,6 @@ def analyze_email(text: str) -> Dict:
             })
             break
 
-    # Sender address check
     email_pattern = re.findall(r'[\w.+-]+@[\w-]+\.[\w.-]+', text)
     if email_pattern:
         for email in email_pattern:
@@ -293,7 +277,6 @@ def analyze_email(text: str) -> Dict:
                         "detail": "Fishing domenlar ko'pincha bepul domenlar ishlatadi"
                     })
 
-    # Grammar/spelling issues simulation
     typo_indicators = ['clck', 'logn', 'verfiy', 'acount', 'pasword', 'urgant']
     typos_found = [t for t in typo_indicators if t in text_lower]
     if typos_found:
@@ -343,21 +326,7 @@ def get_training_scenarios() -> List[Dict]:
             "title": "Elektron pochta tekshiruvi",
             "category": "email",
             "difficulty": "oson",
-            "scenario": """
-Jo'natuvchi: security@paypa1-verify.tk
-Mavzu: DARHOL! Hisobingiz bloklandi!
-
-Hurmatli foydalanuvchi,
-
-Sizning PayPal hisobingizda shubhali faoliyat aniqlandi. 
-ZUDLIK BILAN quyidagi havolaga bosib hisobingizni tasdiqlang:
-
-http://paypal-secure-verify.xyz/login?token=abc123
-
-24 soat ichida tasdiqlasangiz, hisobingiz o'chiriladi.
-
-PayPal Xavfsizlik Xizmati
-            """,
+            "scenario": "Jo'natuvchi: security@paypa1-verify.tk\nMavzu: DARHOL! Hisobingiz bloklandi!\n\nHurmatli foydalanuvchi,\n\nSizning PayPal hisobingizda shubhali faoliyat aniqlandi.\nZUDLIK BILAN quyidagi havolaga bosib hisobingizni tasdiqlang:\n\nhttp://paypal-secure-verify.xyz/login?token=abc123\n\n24 soat ichida tasdiqlasangiz, hisobingiz o'chiriladi.\n\nPayPal Xavfsizlik Xizmati",
             "question": "Bu email qanday tavsiflanadi?",
             "options": [
                 "Haqiqiy PayPal xabari",

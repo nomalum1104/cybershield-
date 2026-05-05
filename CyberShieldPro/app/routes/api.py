@@ -92,7 +92,6 @@ async def submit_answer(data: TrainingSubmit):
 
 @router.get("/stats/dashboard")
 async def get_dashboard():
-    current_hour = datetime.now().hour
     threat_rate = round((scan_stats["threats_found"] / max(scan_stats["total_scans"], 1)) * 100, 1)
 
     return {
