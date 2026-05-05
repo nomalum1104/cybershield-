@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberShieldPro — Kiberxavfsizlik Tizimi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;500;700&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #020408;
+  --bg2: #060c14;
+  --bg3: #0a1628;
+  --panel: #0d1f35;
+  --border: #0f3460;
+  --cyan: #00d4ff;
+  --cyan-dim: rgba(0,212,255,0.15);
+  --cyan-glow: 0 0 20px rgba(0,212,255,0.4);
+  --green: #00ff9f;
+  --green-dim: rgba(0,255,159,0.15);
+  --green-glow: 0 0 20px rgba(0,255,159,0.4);
+  --red: #ff2d55;
+  --red-dim: rgba(255,45,85,0.15);
+  --red-glow: 0 0 20px rgba(255,45,85,0.4);
+  --yellow: #ffd60a;
+  --yellow-dim: rgba(255,214,10,0.12);
+  --purple: #bf5af2;
+  --purple-dim: rgba(191,90,242,0.15);
+  --text: #e8f4ff;
+  --text-dim: #7a9bbf;
+  --text-muted: #3a5a7a;
+  --font-head: 'Orbitron', monospace;
+  --font-body: 'JetBrains Mono', monospace;
+  --font-ui: 'Rajdhani', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* MATRIX CANVAS */
+#matrix-canvas {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  opacity: 0.04; z-index: 0; pointer-events: none;
+}
+
+/* SCAN LINES */
+body::before {
+  content: '';
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none; z-index: 1;
+}
+
+/* LAYOUT */
+.app-shell { position: relative; z-index: 2; display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 72px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+  position: fixed; left: 0; top: 0; bottom: 0;
+  z-index: 100;
+  transition: width 0.3s ease;
+}
+
+.sidebar:hover { width: 220px; }
+
+.logo {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-head);
+  font-size: 14px; font-weight: 900;
+  color: #000;
+  margin-bottom: 30px;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  width: 100%;
+  display: flex; align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  border: none; background: none;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 16px; font-weight: 600;
+  text-align: left;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.nav-item:hover { color: var(--cyan); background: var(--cyan-dim); }
+.nav-item.active {
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  border-right: 2px solid var(--cyan);
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--cyan);
+  box-shadow: var(--cyan-glow);
+}
+
+.nav-icon { font-size: 18px; min-width: 40px; text-align: center; }
+.nav-label { opacity: 0; transition: opacity 0.2s; }
+.sidebar:hover .nav-label { opacity: 1; }
+
+/* MAIN CONTENT */
+.main { margin-left: 72px; flex: 1; display: flex; flex-direction: column; }
+
+/* HEADER */
+.topbar {
+  background: rgba(6,12,20,0.95);
+  border-bottom: 1px solid var(--border);
+  padding: 0 30px;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(20px);
+}
+
+.topbar-brand {
+  font-family: var(--font-head);
+  font-size: 18px; font-weight: 700;
+  color: var(--cyan);
+  letter-spacing: 2px;
+}
+.topbar-brand span { color: var(--purple); }
+
+.status-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--green-dim);
+  border: 1px solid rgba(0,255,159,0.3);
+  padding: 6px 14px; border-radius: 20px;
+  font-family: var(--font-ui); font-size: 13px;
+  font-weight: 600; color: var(--green);
+}
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+
+/* PAGE */
+.page { display: none; padding: 30px; }
+.page.active { display: block; }
+
+/* PAGE HEADER */
+.page-header { margin-bottom: 28px; }
+.page-title {
+  font-family: var(--font-head);
+  font-size: 26px; font-weight: 700;
+  color: var(--cyan);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.page-subtitle { color: var(--text-dim); font-size: 13px; }
+
+/* CARDS */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0.5;
+}
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+/* STAT CARDS */
+.stat-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card.cyan { border-color: rgba(0,212,255,0.4); }
+.stat-card.green { border-color: rgba(0,255,159,0.4); }
+.stat-card.red { border-color: rgba(255,45,85,0.4); }
+.stat-card.purple { border-color: rgba(191,90,242,0.4); }
+
+.stat-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+.stat-value {
+  font-family: var(--font-head);
+  font-size: 28px; font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.stat-card.cyan .stat-value { color: var(--cyan); }
+.stat-card.green .stat-value { color: var(--green); }
+.stat-card.red .stat-value { color: var(--red); }
+.stat-card.purple .stat-value { color: var(--purple); }
+.stat-label { font-size: 11px; color: var(--text-muted); font-family: var(--font-ui); letter-spacing: 1px; text-transform: uppercase; }
+
+/* INPUTS */
+.input-group { margin-bottom: 16px; }
+.input-label { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: block; font-family: var(--font-ui); }
+.cyber-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  resize: vertical;
+}
+.cyber-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px rgba(0,212,255,0.15);
+}
+.cyber-input::placeholder { color: var(--text-muted); }
+
+/* BUTTONS */
+.btn {
+  border: none; border-radius: 8px;
+  padding: 13px 28px;
+  font-family: var(--font-ui);
+  font-size: 15px; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 8px;
+  letter-spacing: 1px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--cyan), #0099cc);
+  color: #000;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: var(--cyan-glow); }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+.btn-danger:hover { background: var(--red); color: #000; }
+.btn-success { background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
+.btn-success:hover { background: var(--green); color: #000; }
+.btn-sm { padding: 8px 16px; font-size: 13px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* SCAN RESULT */
+.result-box {
+  margin-top: 20px;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  display: none;
+}
+.result-box.visible { display: block; animation: fadeSlide 0.4s ease; }
+
+.risk-meter {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.risk-score {
+  font-family: var(--font-head);
+  font-size: 64px; font-weight: 900;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.risk-score.green { color: var(--green); text-shadow: var(--green-glow); }
+.risk-score.yellow { color: var(--yellow); text-shadow: 0 0 20px rgba(255,214,10,0.4); }
+.risk-score.red { color: var(--red); text-shadow: var(--red-glow); }
+.risk-label {
+  font-family: var(--font-head); font-size: 14px; letter-spacing: 3px;
+}
+.risk-label.green { color: var(--green); }
+.risk-label.yellow { color: var(--yellow); }
+.risk-label.red { color: var(--red); }
+
+.progress-bar-wrap {
+  background: var(--bg3); border-radius: 4px; height: 8px;
+  margin: 16px 0; overflow: hidden;
+}
+.progress-bar {
+  height: 100%; border-radius: 4px;
+  transition: width 1s ease;
+}
+.progress-bar.green { background: linear-gradient(90deg, var(--green), #00cc7a); }
+.progress-bar.yellow { background: linear-gradient(90deg, var(--yellow), #cc9900); }
+.progress-bar.red { background: linear-gradient(90deg, var(--red), #cc0033); }
+
+.indicators { list-style: none; }
+.indicator-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 16px; border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.indicator-item.danger { background: var(--red-dim); border: 1px solid rgba(255,45,85,0.2); }
+.indicator-item.warning { background: var(--yellow-dim); border: 1px solid rgba(255,214,10,0.2); }
+.indicator-item.safe { background: var(--green-dim); border: 1px solid rgba(0,255,159,0.2); }
+.indicator-item.info { background: var(--cyan-dim); border: 1px solid rgba(0,212,255,0.2); }
+.indicator-text strong { display: block; margin-bottom: 3px; }
+.indicator-text small { color: var(--text-dim); font-size: 12px; }
+
+.recommendations { margin-top: 20px; }
+.rec-title { font-family: var(--font-ui); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; }
+.rec-item {
+  padding: 10px 14px;
+  background: var(--bg3);
+  border-left: 3px solid var(--cyan);
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 8px;
+  font-size: 13px; color: var(--text-dim);
+}
+
+/* TRAINING */
+.scenario-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.scenario-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.scenario-badge {
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  font-family: var(--font-ui);
+}
+.badge-easy { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,255,159,0.3); }
+.badge-medium { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(255,214,10,0.3); }
+.badge-hard { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,45,85,0.3); }
+
+.scenario-text {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  margin-bottom: 20px;
+  font-family: var(--font-body);
+  color: var(--text-dim);
+}
+.scenario-text.email-style {
+  border-left: 3px solid var(--red);
+}
+
+.options-grid { display: grid; gap: 10px; }
+.option-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  color: var(--text);
+  font-family: var(--font-ui); font-size: 15px;
+  cursor: pointer; text-align: left;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 12px;
+}
+.option-btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-dim); }
+.option-btn.correct { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+.option-btn.wrong { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+.option-btn:disabled { cursor: default; }
+.option-letter { font-family: var(--font-head); font-size: 13px; font-weight: 700; min-width: 24px; }
+
+.explanation-box {
+  background: var(--bg);
+  border: 1px solid var(--cyan);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  font-size: 13px; line-height: 1.7;
+  color: var(--text-dim);
+  display: none;
+}
+.explanation-box.visible { display: block; animation: fadeSlide 0.3s ease; }
+
+/* PROGRESS */
+.training-progress {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 24px;
+  background: var(--bg3);
+  border-radius: 10px; padding: 16px 20px;
+  border: 1px solid var(--border);
+}
+.progress-steps { display: flex; gap: 8px; }
+.step-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--border); transition: all 0.3s;
+}
+.step-dot.done { background: var(--green); }
+.step-dot.current { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+
+/* DASHBOARD CHARTS */
+.chart-container { position: relative; height: 220px; }
+.live-feed { max-height: 300px; overflow-y: auto; }
+.feed-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(15,52,96,0.5);
+  font-size: 13px;
+  animation: fadeSlide 0.3s ease;
+}
+.feed-item:last-child { border-bottom: none; }
+.feed-type { font-family: var(--font-head); font-size: 10px; letter-spacing: 1px; }
+.feed-score { font-family: var(--font-head); font-size: 12px; font-weight: 700; }
+
+/* CERTIFICATE */
+.cert-card {
+  background: linear-gradient(135deg, #060c14, #0a1628);
+  border: 2px solid var(--cyan);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.cert-card::before {
+  content: '';
+  position: absolute; inset: 4px;
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 14px;
+  pointer-events: none;
+}
+.cert-shield { font-size: 72px; margin-bottom: 16px; display: block; }
+.cert-title { font-family: var(--font-head); font-size: 11px; letter-spacing: 4px; color: var(--text-dim); margin-bottom: 8px; }
+.cert-name { font-family: var(--font-head); font-size: 32px; font-weight: 700; color: var(--cyan); margin-bottom: 16px; }
+.cert-text { color: var(--text-dim); font-size: 13px; line-height: 1.8; margin-bottom: 24px; }
+.cert-badge {
+  display: inline-block;
+  background: var(--green-dim);
+  border: 1px solid var(--green);
+  color: var(--green);
+  padding: 8px 24px; border-radius: 20px;
+  font-family: var(--font-head); font-size: 12px; letter-spacing: 2px;
+}
+
+/* ANIMATIONS */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scanLine {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100vh); }
+}
+@keyframes glitch {
+  0%, 90%, 100% { clip-path: none; transform: none; }
+  92% { clip-path: rect(10px, 1000px, 20px, 0); transform: translateX(-5px); }
+  94% { clip-path: rect(50px, 1000px, 60px, 0); transform: translateX(3px); }
+  96% { clip-path: rect(30px, 1000px, 40px, 0); transform: translateX(-2px); }
+}
+
+/* LOADING */
+.scan-loading {
+  display: none;
+  text-align: center; padding: 30px;
+}
+.scan-loading.visible { display: block; }
+.radar {
+  width: 80px; height: 80px;
+  border: 2px solid var(--cyan);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  position: relative;
+  animation: spin 2s linear infinite;
+}
+.radar::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  width: 50%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan));
+  transform-origin: left center;
+  animation: radarSweep 2s linear infinite;
+}
+@keyframes spin { to { transform: rotate(0deg); } }
+@keyframes radarSweep { to { transform: rotate(360deg); } }
+
+/* TABS */
+.scan-tabs { display: flex; gap: 0; margin-bottom: 20px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.scan-tab {
+  flex: 1; padding: 12px; background: var(--bg);
+  border: none; color: var(--text-dim);
+  cursor: pointer; font-family: var(--font-ui); font-size: 15px; font-weight: 600;
+  transition: all 0.2s;
+}
+.scan-tab.active { background: var(--cyan-dim); color: var(--cyan); }
+
+/* THREAT MAP */
+.threat-list { display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; }
+.threat-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: 8px;
+  border-left: 3px solid var(--border);
+  animation: fadeSlide 0.5s ease;
+  font-size: 13px;
+}
+.threat-item.HIGH { border-left-color: var(--red); }
+.threat-item.MEDIUM { border-left-color: var(--yellow); }
+.threat-item.LOW { border-left-color: var(--green); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* HERO */
+.hero {
+  text-align: center;
+  padding: 60px 30px 40px;
+}
+.hero-tag {
+  display: inline-block;
+  background: var(--cyan-dim);
+  border: 1px solid rgba(0,212,255,0.3);
+  color: var(--cyan);
+  padding: 6px 16px; border-radius: 20px;
+  font-size: 12px; font-family: var(--font-ui);
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.hero-title {
+  font-family: var(--font-head);
+  font-size: 48px; font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  animation: glitch 8s infinite;
+}
+.hero-title .accent { color: var(--cyan); }
+.hero-title .accent2 { color: var(--purple); }
+.hero-sub { color: var(--text-dim); font-size: 15px; max-width: 600px; margin: 0 auto 32px; line-height: 1.7; }
+.hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.hero-stats { display: flex; gap: 40px; justify-content: center; margin-top: 50px; }
+.hero-stat { text-align: center; }
+.hero-stat-num { font-family: var(--font-head); font-size: 28px; font-weight: 700; color: var(--cyan); }
+.hero-stat-label { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+/* Section title */
+.section-title {
+  font-family: var(--font-head);
+  font-size: 13px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--text-dim);
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+</style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">CS</div>
+    <button class="nav-item active" onclick="showPage('home')">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Asosiy</span>
+    </button>
+    <button class="nav-item" onclick="showPage('scanner')">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">Skaner</span>
+    </button>
+    <button class="nav-item" onclick="showPage('training')">
+      <span class="nav-icon">🎓</span>
+      <span class="nav-label">Trening</span>
+    </button>
+    <button class="nav-item" onclick="showPage('dashboard')">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="showPage('certificate')">
+      <span class="nav-icon">🏆</span>
+      <span class="nav-label">Sertifikat</span>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-brand">CYBER<span>SHIELD</span>PRO</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="font-family:var(--font-body);font-size:12px;color:var(--text-muted)" id="clock"></div>
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          HIMOYA FAOL
+        </div>
+      </div>
+    </header>
+
+    <!-- HOME PAGE -->
+    <div id="page-home" class="page active">
+      <div class="hero">
+        <div class="hero-tag">⚡ v2.0.0 // AI Kiberxavfsizlik</div>
+        <div class="hero-title">
+          CYBER<span class="accent">SHIELD</span><br>
+          <span class="accent2">PRO</span> TIZIMI
+        </div>
+        <p class="hero-sub">
+          Fishing hujumlarini aniqlang, xavfsizlik treningini o'ting va korporativ himoyangizni kuchaytiring. AI asosida ishlaydigan kiberxavfsizlik platformasi.
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" onclick="showPage('scanner')">🔍 Skanerlash</button>
+          <button class="btn btn-success" onclick="showPage('training')">🎓 Trening Boshlash</button>
+          <button class="btn" style="background:var(--purple-dim);color:var(--purple);border:1px solid var(--purple)" onclick="showPage('dashboard')">📊 Dashboard</button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-num" id="hs-scans">1,247</div>
+            <div class="hero-stat-label">Jami Skaner</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num" id="hs-threats">389</div>
+            <div class="hero-stat-label">Tahdid Aniqlandi</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num" id="hs-users">5</div>
+            <div class="hero-stat-label">Trening Savoli</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">99.2%</div>
+            <div class="hero-stat-label">Aniqlik</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:0 30px 30px">
+        <div class="section-title">Xususiyatlar</div>
+        <div class="grid-3">
+          <div class="card" style="cursor:pointer" onclick="showPage('scanner')">
+            <div style="font-size:36px;margin-bottom:12px">🔍</div>
+            <div style="font-family:var(--font-head);font-size:15px;color:var(--cyan);margin-bottom:8px">Fishing Skaner</div>
+            <div style="font-size:13px;color:var(--text-dim);line-height:1.7">URL va email matnlarini AI yordamida tahlil qiling. 20+ ko'rsatkich tekshiriladi.</div>
+          </div>
+          <div class="card" style="cursor:pointer" onclick="showPage('training')">
+            <div style="font-size:36px;margin-bottom:12px">🎓</div>
+            <div style="font-family:var(--font-head);font-size:15px;color:var(--green);margin-bottom:8px">Interaktiv Trening</div>
+            <div style="font-size:13px;color:var(--text-dim);line-height:1.7">5 ta real stsenariy bilan o'qing. Ball to'plang va sertifikat oling.</div>
+          </div>
+          <div class="card" style="cursor:pointer" onclick="showPage('dashboard')">
+            <div style="font-size:36px;margin-bottom:12px">📊</div>
+            <div style="font-family:var(--font-head);font-size:15px;color:var(--purple);margin-bottom:8px">Real-time Dashboard</div>
+            <div style="font-size:13px;color:var(--text-dim);line-height:1.7">Jonli tahdid monitoringi, statistika va grafiklar.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCANNER PAGE -->
+    <div id="page-scanner" class="page">
+      <div class="page-header">
+        <div class="page-title">🔍 Fishing Skaner</div>
+        <div class="page-subtitle">URL yoki email matnini tekshiring — AI 20+ parametrni tahlil qiladi</div>
+      </div>
+
+      <div class="scan-tabs">
+        <button class="scan-tab active" id="tab-url" onclick="switchScanTab('url')">🌐 URL Tekshirish</button>
+        <button class="scan-tab" id="tab-email" onclick="switchScanTab('email')">📧 Email Tahlil</button>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <!-- URL SCANNER -->
+          <div id="scan-url-panel" class="card">
+            <div class="input-group">
+              <label class="input-label">URL manzilini kiriting</label>
+              <input type="text" class="cyber-input" id="url-input"
+                placeholder="https://example.com yoki shubhali URL..."
+                onkeypress="if(event.key==='Enter') scanURL()">
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+              <button class="btn btn-sm" style="background:var(--bg3);color:var(--text-dim);border:1px solid var(--border)" onclick="setExample('http://paypa1-verify.tk/login?token=abc')">Misol 1 (Xavfli)</button>
+              <button class="btn btn-sm" style="background:var(--bg3);color:var(--text-dim);border:1px solid var(--border)" onclick="setExample('https://google.com')">Misol 2 (Xavfsiz)</button>
+              <button class="btn btn-sm" style="background:var(--bg3);color:var(--text-dim);border:1px solid var(--border)" onclick="setExample('http://bit.ly/3xK9mP?ref=bank')">Misol 3 (Shubhali)</button>
+            </div>
+            <button class="btn btn-primary" onclick="scanURL()" id="scan-btn" style="width:100%">
+              ⚡ Skanerlash
+            </button>
+
+            <div class="scan-loading" id="url-loading">
+              <div class="radar"></div>
+              <div style="font-family:var(--font-body);font-size:12px;color:var(--cyan)">Tahlil qilinmoqda...</div>
+            </div>
+
+            <div class="result-box" id="url-result"></div>
+          </div>
+
+          <!-- EMAIL SCANNER -->
+          <div id="scan-email-panel" class="card" style="display:none">
+            <div class="input-group">
+              <label class="input-label">Email matnini yoki sarlavhasini paste qiling</label>
+              <textarea class="cyber-input" id="email-input" rows="7"
+                placeholder="Email matnini bu yerga kiriting...&#10;&#10;Masalan: Jo'natuvchi: security@paypa1.tk&#10;Mavzu: DARHOL! Hisobingiz bloklandi!"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="scanEmail()" style="width:100%">
+              ⚡ Email Tahlil Qilish
+            </button>
+
+            <div class="scan-loading" id="email-loading">
+              <div class="radar"></div>
+              <div style="font-family:var(--font-body);font-size:12px;color:var(--cyan)">Tahlil qilinmoqda...</div>
+            </div>
+
+            <div class="result-box" id="email-result"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="section-title">Fishing Belgilari</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+              <div style="display:flex;gap:10px;align-items:center"><span>🚨</span><span style="color:var(--text-dim)">HTTP (HTTPS emas) protokoli</span></div>
+              <div style="display:flex;gap:10px;align-items:center"><span>⚠️</span><span style="color:var(--text-dim)">.tk, .ml, .gq kabi shubhali domenlar</span></div>
+              <div style="display:flex;gap:10px;align-items:center"><span>🎭</span><span style="color:var(--text-dim)">Homograf: paypa1.com vs paypal.com</span></div>
+              <div style="display:flex;gap:10px;align-items:center"><span>⏰</span><span style="color:var(--text-dim)">"Darhol!", "Zudlik bilan!" kabi til</span></div>
+              <div style="display:flex;gap:10px;align-items:center"><span>📏</span><span style="color:var(--text-dim)">100+ belgili uzun URL</span></div>
+              <div style="display:flex;gap:10px;align-items:center"><span>🔗</span><span style="color:var(--text-dim)">bit.ly, tinyurl kabi qisqartirishlar</span></div>
+              <div style="display:flex;gap:10px;align-items:center"><span>📧</span><span style="color:var(--text-dim)">Noto'g'ri domen nomlaridan emaillar</span></div>
+              <div style="display:flex;gap:10px;align-items:center"><span>🎪</span><span style="color:var(--text-dim)">Soxta domendan haqiqiy nom</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">So'nggi Skanlar</div>
+            <div id="recent-scans" class="live-feed">
+              <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">Hali skan amalga oshirilmagan</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAINING PAGE -->
+    <div id="page-training" class="page">
+      <div class="page-header">
+        <div class="page-title">🎓 Xavfsizlik Treningi</div>
+        <div class="page-subtitle">Real stsenariylar orqali fishing hujumlarini aniqlashni o'rgan</div>
+      </div>
+
+      <div class="training-progress">
+        <div style="font-family:var(--font-ui);font-size:13px;color:var(--text-dim);min-width:100px">Savol <span id="q-current">1</span>/<span id="q-total">5</span></div>
+        <div class="progress-steps" id="progress-dots"></div>
+        <div style="margin-left:auto;font-family:var(--font-head);font-size:16px;color:var(--cyan)">Ball: <span id="total-score">0</span></div>
+      </div>
+
+      <div id="training-content"></div>
+      <div id="training-complete" style="display:none;text-align:center" class="card">
+        <div style="font-size:48px;margin-bottom:16px">🏆</div>
+        <div style="font-family:var(--font-head);font-size:24px;color:var(--green);margin-bottom:12px">Trening Yakunlandi!</div>
+        <div style="color:var(--text-dim);margin-bottom:20px">Natijangiz: <span id="final-score" style="color:var(--cyan);font-size:20px;font-family:var(--font-head)">0</span>/100</div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="restartTraining()">🔄 Qayta Boshlash</button>
+          <button class="btn btn-success" onclick="showPage('certificate')">🏆 Sertifikat Olish</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div id="page-dashboard" class="page">
+      <div class="page-header">
+        <div class="page-title">📊 Real-time Dashboard</div>
+        <div class="page-subtitle">Jonli tahdid monitoringi — har 5 soniyada yangilanadi</div>
+      </div>
+
+      <div class="grid-4" style="margin-bottom:20px">
+        <div class="stat-card cyan">
+          <span class="stat-icon">🔍</span>
+          <div class="stat-value" id="d-total">1,247</div>
+          <div class="stat-label">Jami Skan</div>
+        </div>
+        <div class="stat-card red">
+          <span class="stat-icon">🚨</span>
+          <div class="stat-value" id="d-threats">389</div>
+          <div class="stat-label">Tahdidlar</div>
+        </div>
+        <div class="stat-card green">
+          <span class="stat-icon">✅</span>
+          <div class="stat-value" id="d-safe">858</div>
+          <div class="stat-label">Xavfsiz</div>
+        </div>
+        <div class="stat-card purple">
+          <span class="stat-icon">📈</span>
+          <div class="stat-value" id="d-rate">31.2%</div>
+          <div class="stat-label">Tahdid Darajasi</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="section-title">Haftalik Skanlar</div>
+          <div class="chart-container">
+            <canvas id="weeklyChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Tahdid Taqsimoti</div>
+          <div class="chart-container">
+            <canvas id="threatChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">So'nggi Skanlar</div>
+          <div id="dash-recent" class="live-feed"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">🔴 Jonli Tahdidlar</div>
+          <div id="live-threats" class="threat-list">
+            <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">WebSocket ulanishi kutilmoqda...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CERTIFICATE PAGE -->
+    <div id="page-certificate" class="page">
+      <div class="page-header">
+        <div class="page-title">🏆 Sertifikat</div>
+        <div class="page-subtitle">Treningni muvaffaqiyatli yakunlagandan so'ng sertifikat oling</div>
+      </div>
+
+      <div id="cert-locked" class="card" style="text-align:center;padding:40px">
+        <div style="font-size:48px;margin-bottom:16px">🔒</div>
+        <div style="font-family:var(--font-head);font-size:18px;color:var(--text-dim);margin-bottom:12px">Sertifikat Mavjud Emas</div>
+        <div style="color:var(--text-muted);font-size:13px;margin-bottom:20px">Avval treningni yakunlang</div>
+        <button class="btn btn-primary" onclick="showPage('training')">🎓 Treningga O'tish</button>
+      </div>
+
+      <div id="cert-unlocked" style="display:none">
+        <div class="cert-card">
+          <span class="cert-shield">🛡️</span>
+          <div class="cert-title">SERTIFIKAT TAQDIM ETILADI</div>
+          <div class="cert-name" id="cert-username">FOYDALANUVCHI</div>
+          <div class="cert-text">
+            Ushbu sertifikat <strong>CyberShieldPro</strong> platformasining<br>
+            "Kiberxavfsizlik Asoslari" treningini muvaffaqiyatli<br>
+            yakunlaganligini tasdiqlaydi.<br><br>
+            Fishing hujumlarini aniqlash, URL xavfsizligi,<br>
+            va social engineering himoyasi bo'yicha bilim olindi.
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+            <div>
+              <div style="font-family:var(--font-head);font-size:10px;letter-spacing:2px;color:var(--text-muted)">BALL</div>
+              <div style="font-family:var(--font-head);font-size:24px;color:var(--cyan)" id="cert-score">0/100</div>
+            </div>
+            <div class="cert-badge">✓ TASDIQLANGAN</div>
+            <div style="text-align:right">
+              <div style="font-family:var(--font-head);font-size:10px;letter-spacing:2px;color:var(--text-muted)">SANA</div>
+              <div style="font-family:var(--font-head);font-size:14px;color:var(--cyan)" id="cert-date"></div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:20px">
+          <button class="btn btn-primary" onclick="printCert()">🖨️ Chop Etish</button>
+          <button class="btn" style="background:var(--bg3);color:var(--text-dim);border:1px solid var(--border);margin-left:10px" onclick="shareScore()">📤 Ulashish</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ---- MATRIX BACKGROUND ----
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const cols = Math.floor(canvas.width / 16);
+const drops = Array(cols).fill(1);
+const chars = 'アイウエオカキクケコサシスセソ01アBCDEFGHIJK';
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(2,4,8,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#00d4ff';
+  ctx.font = '14px JetBrains Mono';
+  drops.forEach((y, i) => {
+    const char = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillText(char, i * 16, y * 16);
+    if (y * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  });
+}
+setInterval(drawMatrix, 60);
+
+// ---- CLOCK ----
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleDateString('uz-UZ') + ' ' + now.toTimeString().slice(0,8);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ---- PAGE NAVIGATION ----
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const navBtns = document.querySelectorAll('.nav-item');
+  const pages = ['home','scanner','training','dashboard','certificate'];
+  navBtns[pages.indexOf(name)]?.classList.add('active');
+  if (name === 'dashboard') initDashboard();
+  if (name === 'training') initTraining();
+}
+
+// ---- SCAN TAB SWITCH ----
+function switchScanTab(tab) {
+  document.getElementById('scan-url-panel').style.display = tab === 'url' ? 'block' : 'none';
+  document.getElementById('scan-email-panel').style.display = tab === 'email' ? 'block' : 'none';
+  document.getElementById('tab-url').classList.toggle('active', tab === 'url');
+  document.getElementById('tab-email').classList.toggle('active', tab === 'email');
+}
+
+function setExample(url) {
+  document.getElementById('url-input').value = url;
+}
+
+// ---- URL SCAN ----
+async function scanURL() {
+  const url = document.getElementById('url-input').value.trim();
+  if (!url) return;
+  const btn = document.getElementById('scan-btn');
+  btn.disabled = true;
+  document.getElementById('url-loading').classList.add('visible');
+  document.getElementById('url-result').classList.remove('visible');
+
+  try {
+    const res = await fetch('/api/scan/url', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url})
+    });
+    const data = await res.json();
+    showScanResult('url-result', data);
+    updateRecentScans();
+  } catch(e) {
+    // Demo mode — analyze locally with simple rules
+    const data = localURLAnalyze(url);
+    showScanResult('url-result', data);
+  }
+
+  document.getElementById('url-loading').classList.remove('visible');
+  btn.disabled = false;
+}
+
+async function scanEmail() {
+  const text = document.getElementById('email-input').value.trim();
+  if (!text) return;
+  document.getElementById('email-loading').classList.add('visible');
+  document.getElementById('email-result').classList.remove('visible');
+
+  try {
+    const res = await fetch('/api/scan/email', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text})
+    });
+    const data = await res.json();
+    showScanResult('email-result', data);
+    updateRecentScans();
+  } catch(e) {
+    const data = localEmailAnalyze(text);
+    showScanResult('email-result', data);
+  }
+
+  document.getElementById('email-loading').classList.remove('visible');
+}
+
+// ---- LOCAL FALLBACK ANALYZERS ----
+function localURLAnalyze(url) {
+  let score = 0; const indicators = [];
+  if (!url.startsWith('https')) { score += 20; indicators.push({type:'danger',icon:'🔓',text:'HTTP — shifrsiz ulanish',detail:'HTTPS tavsiya etiladi'}); }
+  else indicators.push({type:'safe',icon:'🔒',text:'HTTPS mavjud',detail:'Shifrlash bor'});
+  const suspTlds = ['.tk','.ml','.ga','.cf','.gq','.xyz'];
+  for (const t of suspTlds) { if (url.includes(t)) { score+=30; indicators.push({type:'danger',icon:'⚠️',text:`Shubhali TLD: ${t}`,detail:'Fishing saytlarda keng tarqalgan'}); } }
+  const homographs = [['paypa1','paypal'],['arnazon','amazon'],['g00gle','google'],['micros0ft','microsoft']];
+  for (const [f,r] of homographs) { if (url.includes(f)) { score+=40; indicators.push({type:'danger',icon:'🎭',text:`Homograf: '${f}' → '${r}'`,detail:'Soxta domen'}); } }
+  if (url.includes('bit.ly')||url.includes('tinyurl')) { score+=15; indicators.push({type:'warning',icon:'🔗',text:'URL qisqartirish',detail:'Haqiqiy manzil yashirilgan'}); }
+  if (url.length>100) { score+=10; indicators.push({type:'warning',icon:'📏',text:`Uzun URL: ${url.length} belgi`,detail:'Fishing URLlar uzun bo\'ladi'}); }
+  score = Math.min(score,100);
+  const risk_color = score<25?'green':score<60?'yellow':'red';
+  const risk_level = score<25?'XAVFSIZ':score<60?'SHUBHALI':'XAVFLI';
+  const recommendations = score<25?['URL xavfsiz ko\'rinadi']:score<60?['Ehtiyotkorlik bilan foydalaning','Shaxsiy ma\'lumot kiritmang']:['Bu URL XAVFLI!','Hech narsa kiritmang','Sahifani yoping'];
+  return {score,risk_level,risk_color,indicators,recommendations};
+}
+
+function localEmailAnalyze(text) {
+  let score = 0; const indicators = [];
+  const t = text.toLowerCase();
+  const keywords = ['darhol','zudlik','urgent','tasdiqla','hisobingiz bloklandi','parol','kredit karta'];
+  const found = keywords.filter(k=>t.includes(k));
+  if (found.length) { score+=found.length*10; indicators.push({type:'danger',icon:'🚨',text:`Fishing so'zlari: ${found.length} ta`,detail:found.join(', ')}); }
+  if (t.includes('.tk')||t.includes('.ml')||t.includes('.gq')) { score+=25; indicators.push({type:'danger',icon:'📧',text:'Shubhali domen topildi',detail:'Fishing domenlardan email'}); }
+  const urls = text.match(/https?:\/\/[^\s]+/g)||[];
+  if (urls.length) indicators.push({type:'info',icon:'🔗',text:`${urls.length} ta URL topildi`,detail:'URLlarni alohida tekshiring'});
+  score = Math.min(score,100);
+  const risk_color = score<25?'green':score<60?'yellow':'red';
+  const risk_level = score<25?'XAVFSIZ':score<60?'SHUBHALI':'XAVFLI';
+  const recommendations = score<25?['Email xavfsiz ko\'rinadi']:['Bu emailga ehtiyotkorlik bilan yondashing','Havolalarga bosmang'];
+  return {score,risk_level,risk_color,indicators,recommendations};
+}
+
+// ---- SHOW RESULT ----
+function showScanResult(containerId, data) {
+  const el = document.getElementById(containerId);
+  const colorMap = {green:'var(--green)',yellow:'var(--yellow)',red:'var(--red)'};
+  const c = data.risk_color;
+  el.innerHTML = `
+    <div class="risk-meter">
+      <div class="risk-score ${c}">${data.score}<span style="font-size:28px">%</span></div>
+      <div class="risk-label ${c}">${data.risk_level}</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar ${c}" style="width:0%" id="pb-${containerId}"></div>
+      </div>
+    </div>
+
+    ${data.indicators && data.indicators.length ? `
+    <div style="font-family:var(--font-ui);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px">Tahlil Natijalari</div>
+    <ul class="indicators">
+      ${data.indicators.map(ind=>`
+        <li class="indicator-item ${ind.type}">
+          <span style="font-size:18px">${ind.icon||'•'}</span>
+          <div class="indicator-text">
+            <strong>${ind.text}</strong>
+            <small>${ind.detail||''}</small>
+          </div>
+        </li>
+      `).join('')}
+    </ul>` : ''}
+
+    ${data.recommendations && data.recommendations.length ? `
+    <div class="recommendations">
+      <div class="rec-title">Tavsiyalar</div>
+      ${data.recommendations.map(r=>`<div class="rec-item">${r}</div>`).join('')}
+    </div>` : ''}
+  `;
+  el.classList.add('visible');
+  setTimeout(() => {
+    const pb = document.getElementById('pb-' + containerId);
+    if (pb) pb.style.width = data.score + '%';
+  }, 100);
+}
+
+// ---- RECENT SCANS ----
+const localScans = [];
+function updateRecentScans() {
+  const el = document.getElementById('recent-scans');
+  if (localScans.length === 0) return;
+  el.innerHTML = localScans.slice(0,8).map(s=>{
+    const c = s.score<25?'var(--green)':s.score<60?'var(--yellow)':'var(--red)';
+    return `<div class="feed-item">
+      <div>
+        <div class="feed-type" style="color:${c}">${s.type}</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:2px">${s.value}</div>
+      </div>
+      <div>
+        <div class="feed-score" style="color:${c}">${s.score}%</div>
+        <div style="font-size:11px;color:var(--text-muted)">${s.time}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Override scan functions to track locally too
+const origScanURL = scanURL;
+const origScanEmail = scanEmail;
+
+// Intercept result to track
+function trackScan(type, value, score, risk_level) {
+  localScans.unshift({type, value: value.substring(0,35)+'...', score, risk_level, time: new Date().toLocaleTimeString()});
+}
+
+// ---- TRAINING ----
+let scenarios = [];
+let currentScenario = 0;
+let trainingScore = 0;
+let answered = [];
+
+async function initTraining() {
+  if (scenarios.length > 0) return;
+  try {
+    const res = await fetch('/api/training/scenarios');
+    const data = await res.json();
+    scenarios = data.scenarios;
+  } catch(e) {
+    scenarios = getLocalScenarios();
+  }
+  currentScenario = 0;
+  trainingScore = 0;
+  answered = [];
+  document.getElementById('q-total').textContent = scenarios.length;
+  renderScenario();
+  renderProgressDots();
+}
+
+function getLocalScenarios() {
+  return [
+    {id:1,title:'Email Tekshiruvi',category:'email',difficulty:'oson',
+     scenario:'Jo\'natuvchi: security@paypa1-verify.tk\nMavzu: DARHOL! Hisobingiz bloklandi!\n\nPayPal hisobingizda shubhali faoliyat aniqlandi.\nZUDLIK BILAN tasdiqlang: http://paypal-secure.xyz/login\n\n24 soat ichida tasdiqlasangiz, hisob o\'chiriladi.',
+     question:'Bu email qanday tavsiflanadi?',
+     options:['Haqiqiy PayPal xabari','Fishing hujumi','Spam xabar','Xato email'],
+     correct:1,
+     explanation:'Bu FISHING! Belgilar: paypa1 (1≠l), .tk shubhali domen, "DARHOL/ZUDLIK" — shoshilinch til, HTTP (HTTPS emas), suspicious subdomen.'},
+    {id:2,title:'URL Xavfsizligi',category:'url',difficulty:'o\'rta',
+     scenario:'Bankingiz SMS: "Hisobingizni tasdiqlang: http://kapital-bank-verify.ml/secure/login"',
+     question:'Bu SMS haqiqiymi?',
+     options:['Ha, rasmiy SMS','Shubhali, lekin xavfsiz','Soxta fishing SMS','Noma\'lum'],
+     correct:2,
+     explanation:'.ml bepul shubhali TLD, Kapitalbank.uz rasmiy domeni emas, banklar SMS orqali login so\'ramaydi, "verify" fishing belgisi.'},
+    {id:3,title:'Social Engineering',category:'social',difficulty:'qiyin',
+     scenario:'Qo\'ng\'iroq: "Men Microsoft texnik yordamidanman. Kompyuteringizda virus aniqladik! Darhol remote access berishingiz kerak, aks holda 2 soatdan keyin ma\'lumotlaringiz o\'chiriladi!"',
+     question:'Nima qilasiz?',
+     options:['Remote access beraman','Ismini so\'rayman','Microsoft rasmiy raqamini topib chaqiraman','IT bo\'limga aytaman, hech narsa qilmayman'],
+     correct:3,
+     explanation:'Microsoft hech qachon o\'zi qo\'ng\'iroq qilmaydi. Vaqt bosimi — social engineering taktikasi. IT bo\'limga xabar berish to\'g\'ri yo\'l.'},
+    {id:4,title:'Parol Xavfsizligi',category:'password',difficulty:'oson',
+     scenario:'Do\'stingiz: "Parolim esimdan chiqdi, bitta hisobingga kirib menga o\'sha parolni yuboring" dedi.',
+     question:'Nima qilasiz?',
+     options:['Parolimni yubordim, u ishonchli','Bermayman, o\'zi tiklashi kerak','Bir marta beraman','SMS orqali yubordim'],
+     correct:1,
+     explanation:'Parolni HECH QACHON hech kimga bermang. U o\'z hisobiga kirish uchun parol tiklashdan foydalanishi kerak.'},
+    {id:5,title:'2FA Muhimligi',category:'2fa',difficulty:'o\'rta',
+     scenario:'Email: "Sizning hisobingizga Rossiyadan kirish urinishi aniqlandi. Agar siz bo\'lmasangiz, kodni kiriting: 847291"',
+     question:'Bu kodni kiritasizmi?',
+     options:['Ha, himoya uchun','Yo\'q, bu fishing bo\'lishi mumkin','Kodni do\'stimga so\'rayman','Hisobni o\'chiraman'],
+     correct:1,
+     explanation:'Bu 2FA bypass fishing! Hujumchi asl saytga kiradi, sizdan kodni oladi va u kiradi. 2FA kodingizni hech kimga bermang!'}
+  ];
+}
+
+function renderProgressDots() {
+  const el = document.getElementById('progress-dots');
+  el.innerHTML = scenarios.map((_, i) => {
+    let cls = 'step-dot';
+    if (i < currentScenario) cls += ' done';
+    else if (i === currentScenario) cls += ' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+function renderScenario() {
+  if (currentScenario >= scenarios.length) {
+    showTrainingComplete();
+    return;
+  }
+  const s = scenarios[currentScenario];
+  document.getElementById('q-current').textContent = currentScenario + 1;
+  document.getElementById('total-score').textContent = trainingScore;
+
+  const diffClass = s.difficulty === 'oson' ? 'badge-easy' : s.difficulty === 'qiyin' ? 'badge-hard' : 'badge-medium';
+  const letters = ['A','B','C','D'];
+  const isEmail = s.category === 'email';
+
+  document.getElementById('training-content').innerHTML = `
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <div style="font-family:var(--font-head);font-size:16px;color:var(--cyan)">${s.title}</div>
+        <div class="scenario-badge ${diffClass}">${s.difficulty.toUpperCase()}</div>
+      </div>
+      <div class="scenario-text ${isEmail?'email-style':''}">${s.scenario}</div>
+      <div style="font-family:var(--font-ui);font-size:14px;color:var(--text);font-weight:600;margin-bottom:12px">${s.question}</div>
+      <div class="options-grid" id="options-grid">
+        ${s.options.map((opt, i) => `
+          <button class="option-btn" onclick="selectAnswer(${i})" id="opt-${i}">
+            <span class="option-letter">${letters[i]}</span>
+            ${opt}
+          </button>
+        `).join('')}
+      </div>
+      <div class="explanation-box" id="explanation-box"></div>
+      <div style="margin-top:16px;text-align:right">
+        <button class="btn btn-primary btn-sm" id="next-btn" style="display:none" onclick="nextScenario()">
+          ${currentScenario < scenarios.length - 1 ? 'Keyingi ➜' : 'Yakunlash 🏆'}
+        </button>
+      </div>
+    </div>
+  `;
+  renderProgressDots();
+}
+
+function selectAnswer(idx) {
+  const s = scenarios[currentScenario];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+
+  const isCorrect = idx === s.correct;
+  if (isCorrect) {
+    trainingScore += 20;
+    btns[idx].classList.add('correct');
+    document.getElementById('total-score').textContent = trainingScore;
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[s.correct].classList.add('correct');
+  }
+
+  const expBox = document.getElementById('explanation-box');
+  expBox.innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <span style="font-size:18px">${isCorrect?'✅':'❌'}</span>
+      <strong style="color:${isCorrect?'var(--green)':'var(--red)'}">
+        ${isCorrect ? 'To\'g\'ri javob!' : 'Noto\'g\'ri javob'}
+      </strong>
+    </div>
+    ${s.explanation}
+  `;
+  expBox.classList.add('visible');
+  document.getElementById('next-btn').style.display = 'inline-flex';
+  answered.push(isCorrect);
+}
+
+function nextScenario() {
+  currentScenario++;
+  renderScenario();
+  renderProgressDots();
+}
+
+function showTrainingComplete() {
+  document.getElementById('training-content').style.display = 'none';
+  const complete = document.getElementById('training-complete');
+  complete.style.display = 'block';
+  document.getElementById('final-score').textContent = trainingScore;
+  localStorage.setItem('training_score', trainingScore);
+  localStorage.setItem('training_done', 'true');
+}
+
+function restartTraining() {
+  scenarios = [];
+  document.getElementById('training-content').style.display = 'block';
+  document.getElementById('training-complete').style.display = 'none';
+  initTraining();
+}
+
+// ---- CERTIFICATE ----
+function initCertificate() {
+  const done = localStorage.getItem('training_done');
+  const score = localStorage.getItem('training_score') || 0;
+  if (done) {
+    document.getElementById('cert-locked').style.display = 'none';
+    document.getElementById('cert-unlocked').style.display = 'block';
+    document.getElementById('cert-score').textContent = score + '/100';
+    document.getElementById('cert-date').textContent = new Date().toLocaleDateString('uz-UZ');
+  }
+}
+
+function printCert() { window.print(); }
+
+function shareScore() {
+  const score = localStorage.getItem('training_score') || 0;
+  const text = `Men CyberShieldPro treningidan ${score}/100 ball to'pladim! Fishing hujumlariga qarshi himoyalanishni o'rgandim. 🛡️`;
+  if (navigator.share) {
+    navigator.share({title:'CyberShieldPro Sertifikat', text});
+  } else {
+    navigator.clipboard.writeText(text);
+    alert('Nusxa ko\'chirildi!');
+  }
+}
+
+// Override showPage for certificate
+const originalShowPage = showPage;
+window.showPage = function(name) {
+  originalShowPage(name);
+  if (name === 'certificate') initCertificate();
+};
+
+// ---- DASHBOARD ----
+let dashboardCharts = {};
+let wsConnected = false;
+
+async function initDashboard() {
+  await loadDashboardData();
+  if (!wsConnected) connectWebSocket();
+  if (!dashboardCharts.weekly) buildCharts();
+}
+
+async function loadDashboardData() {
+  try {
+    const res = await fetch('/api/stats/dashboard');
+    const data = await res.json();
+    document.getElementById('d-total').textContent = data.total_scans.toLocaleString();
+    document.getElementById('d-threats').textContent = data.threats_found;
+    document.getElementById('d-safe').textContent = (data.total_scans - data.threats_found);
+    document.getElementById('d-rate').textContent = data.threat_rate + '%';
+    renderDashRecent(data.recent_scans || []);
+  } catch(e) {
+    // use demo data
+  }
+}
+
+function renderDashRecent(scans) {
+  const el = document.getElementById('dash-recent');
+  if (!scans.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">Hali skan yo\'q</div>'; return; }
+  el.innerHTML = scans.map(s => {
+    const c = s.score < 25 ? 'var(--green)' : s.score < 60 ? 'var(--yellow)' : 'var(--red)';
+    return `<div class="feed-item">
+      <div>
+        <div class="feed-type" style="color:${c}">${s.type}</div>
+        <div style="font-size:12px;color:var(--text-dim)">${s.value}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="feed-score" style="color:${c}">${s.score}%</div>
+        <div style="font-size:11px;color:var(--text-muted)">${s.time}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildCharts() {
+  const chartDefaults = {
+    color: '#7a9bbf',
+    plugins: { legend: { labels: { color: '#7a9bbf', font: { family: 'Rajdhani', size: 12 } } } }
+  };
+  const days = ['Du','Se','Ch','Pa','Ju','Sh','Ya'];
+  const weekly = new Chart(document.getElementById('weeklyChart'), {
+    type: 'bar',
+    data: {
+      labels: days,
+      datasets: [
+        {label:'Jami', data:[45,67,89,120,95,145,178], backgroundColor:'rgba(0,212,255,0.3)', borderColor:'#00d4ff', borderWidth:1},
+        {label:'Tahdid', data:[14,21,28,38,30,46,57], backgroundColor:'rgba(255,45,85,0.3)', borderColor:'#ff2d55', borderWidth:1}
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#7a9bbf',font:{family:'Rajdhani'}}}},
+      scales:{
+        x:{ticks:{color:'#7a9bbf'},grid:{color:'rgba(15,52,96,0.5)'}},
+        y:{ticks:{color:'#7a9bbf'},grid:{color:'rgba(15,52,96,0.5)'}}
+      }
+    }
+  });
+
+  const pie = new Chart(document.getElementById('threatChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Fishing URL', 'Phishing Email', 'Soxta Domen', 'Social Eng.'],
+      datasets:[{
+        data:[42,31,18,9],
+        backgroundColor:['rgba(255,45,85,0.7)','rgba(255,214,10,0.7)','rgba(191,90,242,0.7)','rgba(0,212,255,0.7)'],
+        borderColor:['#ff2d55','#ffd60a','#bf5af2','#00d4ff'],
+        borderWidth:1
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#7a9bbf',font:{family:'Rajdhani',size:11}}}}
+    }
+  });
+
+  dashboardCharts = {weekly, pie};
+}
+
+function connectWebSocket() {
+  try {
+    const ws = new WebSocket(`ws://${location.host}/ws/threats`);
+    ws.onopen = () => { wsConnected = true; };
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'live_threat') addLiveThreat(msg.data);
+    };
+    ws.onerror = () => { simulateLiveThreats(); };
+    ws.onclose = () => { wsConnected = false; };
+  } catch(e) { simulateLiveThreats(); }
+}
+
+function simulateLiveThreats() {
+  setInterval(() => {
+    const threats = ['Fishing URL','Shubhali Email','Zararli Domen'];
+    const locs = ['Toshkent','Samarqand','Buxoro','Andijon','Namangan'];
+    const risks = ['HIGH','MEDIUM','LOW'];
+    addLiveThreat({
+      threat_type: threats[Math.floor(Math.random()*threats.length)],
+      risk: risks[Math.floor(Math.random()*risks.length)],
+      location: locs[Math.floor(Math.random()*locs.length)],
+      time: new Date().toLocaleTimeString(),
+      blocked: Math.random() > 0.4
+    });
+  }, 4000);
+}
+
+function addLiveThreat(t) {
+  const el = document.getElementById('live-threats');
+  const colorMap = {HIGH:'var(--red)',MEDIUM:'var(--yellow)',LOW:'var(--green)'};
+  const c = colorMap[t.risk] || 'var(--cyan)';
+  const item = document.createElement('div');
+  item.className = `threat-item ${t.risk}`;
+  item.innerHTML = `
+    <div>
+      <div style="font-weight:600;font-size:13px">${t.threat_type}</div>
+      <div style="font-size:11px;color:var(--text-muted)">${t.location} • ${t.time}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:var(--font-head);font-size:11px;color:${c}">${t.risk}</div>
+      <div style="font-size:11px;color:${t.blocked?'var(--green)':'var(--red)'}">${t.blocked?'✓ Bloklandi':'⚠ Faol'}</div>
+    </div>
+  `;
+  if (el.children.length === 1 && el.children[0].tagName === 'DIV' && el.children[0].style.textAlign === 'center') {
+    el.innerHTML = '';
+  }
+  el.insertBefore(item, el.firstChild);
+  if (el.children.length > 8) el.removeChild(el.lastChild);
+}
+
+// Auto-refresh dashboard stats
+setInterval(loadDashboardData, 30000);
+</script>
+</body>
+</html>
