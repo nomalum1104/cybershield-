@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from Security import (
+from app.Security import (
     authenticate, validate_token, revoke_token,
     check_rate_limit, sanitize_input,
     get_audit_log, get_blocked_ips, get_active_sessions
